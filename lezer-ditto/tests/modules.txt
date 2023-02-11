@@ -1,0 +1,7 @@
+# Minimal Module
+
+module Some.Module exports (..)
+
+==>
+
+SourceFile(ModuleHeader(ModuleName, ExposingEverything))

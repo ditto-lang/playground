@@ -1,0 +1,26 @@
+{
+  "name": "lezer-ditto",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./types/index.d.ts",
+  "scripts": {
+    "build": "lezer-generator src/ditto.grammar --names -o src/parser",
+    "gen-types": "tsc --allowJs -d --emitDeclarationOnly src/index.js --outDir types",
+    "test": "mocha test.js"
+  },
+  "dependencies": {
+    "@lezer/highlight": "^1.1.3",
+    "@lezer/lr": "^1.3.3"
+  },
+  "devDependencies": {
+    "@lezer/generator": "^1.2.2",
+    "mocha": "^10.2.0",
+    "prettier": "^2.8.4",
+    "typescript": "^4.9.5"
+  },
+  "optionalDependencies": {
+    "lezer-import-tree-sitter": "github:lezer-parser/import-tree-sitter",
+    "tree-sitter-ditto": "github:ditto-lang/tree-sitter-ditto"
+  }
+}

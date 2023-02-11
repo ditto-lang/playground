@@ -1,0 +1,438 @@
+@top SourceFile {
+  ModuleHeader ModuleImport* moduleDeclaration*
+}
+
+ModuleHeader {
+  "module" ModuleName "exports" exposing
+}
+
+ModuleName {
+  properName ("." properName)*
+}
+
+ModuleImport {
+  kw<"import"> ModuleImportPackage? ModuleName (kw<"as"> ModuleImportAlias)? exposing?
+}
+
+ModuleImportPackage {
+  "(" packageName ")"
+}
+
+ModuleImportAlias {
+  properName
+}
+
+exposing {
+  ExposingEverything |
+  ExposingList
+}
+
+ExposingEverything {
+  everything
+}
+
+ExposingList {
+  "(" exposingListItem ("," exposingListItem)* ","? ")"
+}
+
+exposingListItem {
+  ExposingListItemType |
+  ExposingListItemValue
+}
+
+ExposingListItemType {
+  ExposingListItemTypeName ExposingListItemTypeConstructors?
+}
+
+ExposingListItemTypeName {
+  properName
+}
+
+ExposingListItemTypeConstructors {
+  everything
+}
+
+ExposingListItemValue {
+  name
+}
+
+moduleDeclaration {
+  typeDeclaration |
+  TypeAliasDeclaration |
+  ForeignValueDeclaration |
+  ValueDeclaration
+}
+
+typeDeclaration {
+  TypeDeclaration |
+  TypeDeclarationEmpty
+}
+
+TypeDeclaration {
+  kw<"type"> TypeDeclarationName TypeDeclarationVariables? "=" "|"? TypeDeclarationConstructor ("|" TypeDeclarationConstructor)*
+}
+
+TypeDeclarationEmpty {
+  kw<"type"> TypeDeclarationName TypeDeclarationVariables?
+}
+
+TypeAliasDeclaration {
+  kw<"type"> kw<"alias"> TypeDeclarationName TypeDeclarationVariables? "=" type
+}
+
+TypeDeclarationName {
+  properName
+}
+
+TypeDeclarationVariables {
+  "(" TypeDeclarationVariable ("," TypeDeclarationVariable)* ","? ")"
+}
+
+TypeDeclarationVariable {
+  name
+}
+
+TypeDeclarationConstructor {
+  TypeDeclarationConstructorName TypeDeclarationConstructorFields?
+}
+
+TypeDeclarationConstructorName {
+  properName
+}
+
+TypeDeclarationConstructorFields {
+  "(" type ("," type)* ","? ")"
+}
+
+ValueDeclaration {
+  ValueDeclarationName TypeAnnotation? "=" expression
+}
+
+ValueDeclarationName {
+  name
+}
+
+ForeignValueDeclaration {
+  kw<"foreign"> ForeignValueDeclarationName TypeAnnotation
+}
+
+ForeignValueDeclarationName {
+  name
+}
+
+type {
+  TypeFunction |
+  type1
+}
+
+type1 {
+  typeParens |
+  TypeCall |
+  TypeClosedRecord |
+  TypeOpenRecord |
+  TypeConstructor |
+  TypeVariable
+}
+
+typeParens {
+  "(" type ")"
+}
+
+TypeConstructor {
+  Qualifier? TypeConstructorProperName
+}
+
+TypeConstructorProperName {
+  properName
+}
+
+TypeVariable {
+  name
+}
+
+TypeCall /* precedence: left 0 */ {
+  (TypeConstructor | TypeVariable) TypeCallArguments
+}
+
+TypeCallArguments {
+  "(" type ("," type)* ","? ")"
+}
+
+TypeFunction {
+  "(" (type ("," type)* ","?)? ")" "->" type
+}
+
+TypeClosedRecord {
+  "{" (TypeRecordField ("," TypeRecordField)* ","?)? "}"
+}
+
+TypeRecordField {
+  TypeRecordFieldLabel ":" type
+}
+
+TypeRecordFieldLabel {
+  name
+}
+
+TypeOpenRecord {
+  "{" TypeOpenRecordRowVariable "|" TypeRecordField ("," TypeRecordField)* ","? "}"
+}
+
+TypeOpenRecordRowVariable {
+  name
+}
+
+TypeAnnotation {
+  ":" type
+}
+
+ReturnTypeAnnotation {
+  ":" type1
+}
+
+expression {
+  expression4
+}
+
+expression4 {
+  ExpressionLet |
+  expression3
+}
+
+expression3 {
+  ExpressionFunction |
+  ExpressionMatch |
+  ExpressionEffect |
+  ExpressionIf |
+  expression2
+}
+
+expression2 {
+  ExpressionRightPipe |
+  expression1
+}
+
+expression1 {
+  ExpressionConstructor |
+  expression0
+}
+
+expression0 {
+  ExpressionCall |
+  ExpressionRecordAccess |
+  expressionParens |
+  ExpressionRecord |
+  ExpressionRecordUpdate |
+  ExpressionTrue |
+  ExpressionFalse |
+  ExpressionUnit |
+  ExpressionVariable |
+  ExpressionArray |
+  ExpressionString |
+  ExpressionInt |
+  ExpressionFloat
+}
+
+expressionParens {
+  "(" expression ")"
+}
+
+ExpressionConstructor {
+  Qualifier? ExpressionConstructorProperName
+}
+
+ExpressionConstructorProperName {
+  properName
+}
+
+ExpressionVariable {
+  Qualifier? ExpressionVariableName
+}
+
+ExpressionVariableName {
+  name
+}
+
+ExpressionCall {
+  expression1 ExpressionCallArguments
+}
+
+ExpressionCallArguments {
+  "(" (expression ("," expression)* ","?)? ")"
+}
+
+ExpressionEffect {
+  kw<"do"> "{" expressionEffectStatement "}"
+}
+
+expressionEffectStatement {
+  ExpressionEffectBind |
+  ExpressionEffectLet |
+  ExpressionEffectExpression |
+  ExpressionEffectReturn
+}
+
+ExpressionEffectBind {
+  ExpressionEffectBindName "<-" expression ";" expressionEffectStatement
+}
+
+ExpressionEffectBindName {
+  name
+}
+
+ExpressionEffectLet {
+  kw<"let"> ExpressionEffectLetBinder "=" expression ";" expressionEffectStatement
+}
+
+ExpressionEffectLetBinder {
+  pattern TypeAnnotation?
+}
+
+ExpressionEffectExpression {
+  expression3 (";" expressionEffectStatement)?
+}
+
+ExpressionEffectReturn {
+  kw<"return"> expression
+}
+
+ExpressionFunction {
+  kw<"fn"> "(" (ExpressionFunctionParameter ("," ExpressionFunctionParameter)* ","?)? ")" ReturnTypeAnnotation? "->" expression
+}
+
+ExpressionFunctionParameter {
+  pattern TypeAnnotation?
+}
+
+ExpressionIf {
+  kw<"if"> expression kw<"then"> expression kw<"else"> expression
+}
+
+ExpressionLet {
+  kw<"let"> ExpressionLetValueDeclaration+ kw<"in"> expression
+}
+
+ExpressionLetValueDeclaration {
+  pattern TypeAnnotation? "=" expression
+}
+
+ExpressionArray {
+  "[" (expression ("," expression)* ","?)? "]"
+}
+
+ExpressionMatch {
+  kw<"match"> expression kw<"with"> ExpressionMatchArm+ kw<"end">
+}
+
+ExpressionMatchArm {
+  "|" pattern "->" expression
+}
+
+ExpressionRightPipe {
+  expression2 "|>" expression1
+}
+
+ExpressionRecord {
+  "{" (ExpressionRecordField ("," ExpressionRecordField)* ","?)? "}"
+}
+
+ExpressionRecordField {
+  ExpressionRecordFieldLabel "=" expression
+}
+
+ExpressionRecordFieldLabel {
+  name
+}
+
+ExpressionRecordUpdate {
+  "{" expressionRecordUpdateTarget "|" ExpressionRecordField ("," ExpressionRecordField)* ","? "}"
+}
+
+expressionRecordUpdateTarget {
+  expression1
+}
+
+ExpressionRecordAccess {
+  expression0 "." ExpressionRecordFieldLabel
+}
+
+ExpressionTrue {
+  kw<"true">
+}
+
+ExpressionFalse {
+  kw<"false">
+}
+
+ExpressionUnit {
+  kw<"unit">
+}
+
+pattern {
+  PatternConstructor |
+  PatternVariable |
+  PatternUnused
+}
+
+PatternConstructor {
+  Qualifier? PatternConstructorProperName PatternConstructorFields?
+}
+
+PatternConstructorProperName {
+  properName
+}
+
+PatternConstructorFields {
+  "(" (pattern ("," pattern)* ","?)? ")"
+}
+
+PatternVariable {
+  name
+}
+
+PatternUnused {
+  unusedName
+}
+
+Qualifier {
+  properName "."
+}
+
+kw<term> { @specialize[@name={term}]<name, term> }
+
+@skip { space | Comment }
+
+@tokens {
+  space {
+    @whitespace+
+  }
+  everything {
+    "(" ".." ")"
+  }
+  ExpressionString {
+    "\"" (!["\\]* ("\\\\" ![\n] !["\\]*)*) "\""
+  }
+  ExpressionInt {
+    $[0-9] $[0-9_]*
+  }
+  ExpressionFloat {
+    $[0-9] $[0-9_]* "\\." $[0-9] $[0-9_]*
+  }
+  @precedence { ExpressionFloat, ExpressionInt }
+
+  properName {
+    $[A-Z] $[_0-9a-zA-Z]*
+  }
+  packageName {
+    $[a-z] $[-0-9a-zA-Z]*
+  }
+  name {
+    $[a-z] $[_0-9a-zA-Z]*
+  }
+  unusedName {
+    "_" $[_0-9a-zA-Z]*
+  }
+  Comment {
+    "--" ![\n]*
+  }
+}
