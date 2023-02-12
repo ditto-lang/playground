@@ -13,11 +13,15 @@
     "@codemirror/state": "^6.2.0",
     "@codemirror/view": "^6.7.1",
     "codemirror": "^6.0.1",
-    "lezer-ditto": "file:./lezer-ditto"
+    "lezer-ditto": "*"
   },
   "devDependencies": {
     "prettier": "^2.8.1",
     "typescript": "^4.9.3",
     "vite": "^4.0.0"
-  }
+  },
+  "workspaces": [
+    "lezer-ditto",
+    "packages/*"
+  ]
 }

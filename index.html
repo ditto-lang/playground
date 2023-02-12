@@ -9,6 +9,10 @@
 
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module">
+      import { main } from "./dist/Main.js";
+      const container = document.getElementById("app");
+      main(container)();
+    </script>
   </body>
 </html>

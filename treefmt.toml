@@ -1,0 +1,9 @@
+[formatter.ditto]
+command = "ditto"
+options = ["fmt"]
+includes = ["*.ditto"]
+
+[formatter.prettier]
+command = "npx"
+options = ["prettier", "--write"]
+includes = ["*.js", "*.json", "*.md", "*.yaml", "*.html"]

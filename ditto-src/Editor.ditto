@@ -1,0 +1,25 @@
+module Editor exports (
+    Editor,
+    init,
+    get_text,
+    destroy,
+)
+
+import (vdom) Element (
+    Element,
+)
+
+
+type Editor
+
+init = init_impl
+
+get_text = get_text_impl
+
+destroy = destroy_impl
+
+foreign init_impl: (String, Element) -> Effect(Editor)
+
+foreign get_text_impl: (Editor) -> Effect(String)
+
+foreign destroy_impl: (Editor) -> Effect(Unit)
