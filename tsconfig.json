@@ -1,19 +1,15 @@
 {
+  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "moduleResolution": "Node",
-    "strict": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "noEmit": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true
+    "moduleResolution": "node",
+    // generated JS doesn't (currently) have type annotations,
+    // so `any` is inferred in a lot of places :/
+    "noImplicitAny": false
   },
-  "include": ["src"]
+  "include": [
+    // compiled sources
+    "dist/*",
+    // foreign sources
+    "ditto-src/**/*.js"
+  ]
 }

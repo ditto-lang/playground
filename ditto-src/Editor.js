@@ -52,7 +52,7 @@ export function get_text_impl(editor) {
 
 /**
  * @param {EditorView} editor
- * @returns {() => EditorView}
+ * @returns {() => void}
  */
 export function destroy_impl(editor) {
   return () => {
