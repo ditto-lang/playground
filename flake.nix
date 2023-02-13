@@ -24,6 +24,7 @@
               pkgs.wasm-bindgen-cli
               pkgs.binaryen
               rustToolchain
+              fenixPackages.rust-analyzer
             ];
           };
 
