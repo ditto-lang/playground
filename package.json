@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "wasm-pack": "cd ditto-web && wasm-pack build --target web --out-dir ../packages/ditto-web",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },

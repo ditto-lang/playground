@@ -7,6 +7,9 @@ import (js-task) Task
 import (std) Maybe (
     Maybe(..),
 )
+import (std) Never (
+    Never,
+)
 import (std) Result (
     Result(..),
 )
@@ -19,6 +22,7 @@ import (vdom) Element (
 import (vdom) Events
 import (vdom) Html
 
+import Compiler
 import Editor (
     Editor,
 )
@@ -27,11 +31,25 @@ import Editor (
 main = fn (container: Element): Effect(Unit) -> App.mount(
     {
         container = container,
-        init = fn () -> {state = initial_state, task = Nothing },
+        init = fn () -> {state = initial_state, task = Just(init_compiler) },
         view = view,
         update = update,
     },
 )
+
+type alias Task = Task.Task(Event, Never)
+
+init_compiler: Task =
+    Compiler.init
+    |> Task.and_then(
+        fn (compiler) -> Task.from_effect(
+            do {
+                compiler.greet("loaded!");
+                return compiler
+            },
+        ),
+    )
+    |> Task.map_result(fn (_) -> Ok(NoOp))
 
 type alias State = { render_editor: Bool, editor: Maybe(Editor) }
 

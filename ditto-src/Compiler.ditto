@@ -1,0 +1,32 @@
+module Compiler exports (
+    init,
+)
+
+import (js-task) Task (
+    Task,
+)
+
+import (js-unknown) Unknown (
+    Unknown,
+)
+
+import (std) Effect
+import (std) Result (
+    Result(..),
+)
+
+
+type alias Compiler = { greet: (String) -> Effect(Unit) }
+
+init: Task(Compiler, Unknown) = Task.new(
+    fn (result_handler: Task.Callback(Compiler, Unknown)) -> do {
+        init_impl(
+            fn (compiler) -> result_handler(Ok(compiler)),
+            fn (oops) -> result_handler(Err(oops)),
+        );
+        return Effect.noop
+    },
+)
+
+foreign init_impl: ((Compiler) -> Effect(Unit), (Unknown) -> Effect(Unit)) ->
+    Effect(Unit)
