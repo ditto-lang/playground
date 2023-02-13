@@ -6,4 +6,9 @@ includes = ["*.ditto"]
 [formatter.prettier]
 command = "npx"
 options = ["prettier", "--write"]
-includes = ["*.js", "*.json", "*.md", "*.yaml", "*.html"]
+includes = ["*.js", "*.ts", "*.json", "*.md", "*.yaml", "*.html"]
+
+[formatter.rust]
+command = "rustfmt"
+options = ["--edition", "2021"]
+includes = ["*.rs"]
