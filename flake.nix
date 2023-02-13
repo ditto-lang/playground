@@ -25,6 +25,9 @@
               pkgs.binaryen
               rustToolchain
               fenixPackages.rust-analyzer
+              # TODO: make this conditional for macos
+              # https://github.com/NixOS/nixpkgs/issues/120688
+              pkgs.libiconv
             ];
           };
 

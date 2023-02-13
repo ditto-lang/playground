@@ -1,4 +1,5 @@
 module Compiler exports (
+    Compiler,
     init,
 )
 
@@ -16,17 +17,32 @@ import (std) Result (
 )
 
 
-type alias Compiler = { greet: (String) -> Effect(Unit) }
+type alias Compiler = {
+    compile_js: (String) -> Result(
+        { js: String, warnings: Array(String) },
+        String,
+    ),
+    fmt: (String) -> Result(String, String),
+    parse: (String) -> Result(Unit, String),
+}
 
 init: Task(Compiler, Unknown) = Task.new(
     fn (result_handler: Task.Callback(Compiler, Unknown)) -> do {
         init_impl(
             fn (compiler) -> result_handler(Ok(compiler)),
             fn (oops) -> result_handler(Err(oops)),
+            Ok,
+            Err,
+            unit,
         );
         return Effect.noop
     },
 )
 
-foreign init_impl: ((Compiler) -> Effect(Unit), (Unknown) -> Effect(Unit)) ->
-    Effect(Unit)
+foreign init_impl: (
+    (Compiler) -> Effect(Unit),  -- handle success
+    (Unknown) -> Effect(Unit),  -- handle error
+    (a) -> Result(a, b),  -- Ok
+    (b) -> Result(a, b),  -- Err
+    Unit,
+) -> Effect(Unit)

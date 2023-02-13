@@ -52,6 +52,19 @@ export function get_text_impl(editor) {
 
 /**
  * @param {EditorView} editor
+ * @param {string} code
+ * @returns {() => void}
+ */
+export function set_text_impl(editor, code) {
+  return () => {
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: code },
+    });
+  };
+}
+
+/**
+ * @param {EditorView} editor
  * @returns {() => void}
  */
 export function destroy_impl(editor) {

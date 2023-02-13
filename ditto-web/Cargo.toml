@@ -11,7 +11,21 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = "0.2.63"
+wasm-bindgen = "0.2"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.4"
+miette = { version = "5.5", features = ["fancy"] }
+
+ditto-cst = { git = "https://github.com/ditto-lang/ditto", rev = "68b59db0860607e6dcad3c96b6e2ae257292583a" }
+ditto-checker = { git = "https://github.com/ditto-lang/ditto", rev = "68b59db0860607e6dcad3c96b6e2ae257292583a" }
+ditto-fmt = { git = "https://github.com/ditto-lang/ditto", rev = "68b59db0860607e6dcad3c96b6e2ae257292583a" }
+ditto-codegen-js = { git = "https://github.com/ditto-lang/ditto", rev = "68b59db0860607e6dcad3c96b6e2ae257292583a" }
+
+# Not a direct dependency but we need to enable the `wasm-bindgen` feature.
+#
+# Sub-dependency features aren't supported: https://stackoverflow.com/a/65468297/17263155
+egg = { version = "0.9", features = ["wasm-bindgen"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

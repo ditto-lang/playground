@@ -22,7 +22,9 @@ import (vdom) Element (
 import (vdom) Events
 import (vdom) Html
 
-import Compiler
+import Compiler (
+    Compiler,
+)
 import Editor (
     Editor,
 )
@@ -37,38 +39,30 @@ main = fn (container: Element): Effect(Unit) -> App.mount(
     },
 )
 
-type alias Task = Task.Task(Event, Never)
+type alias State = { compiler: CompilerState, editor: EditorState }
 
-init_compiler: Task =
-    Compiler.init
-    |> Task.and_then(
-        fn (compiler) -> Task.from_effect(
-            do {
-                compiler.greet("loaded!");
-                return compiler
-            },
-        ),
-    )
-    |> Task.map_result(fn (_) -> Ok(NoOp))
+type CompilerState =
+    | CompilerLoading
+    | CompilerLoaded(Compiler)
 
-type alias State = { render_editor: Bool, editor: Maybe(Editor) }
+type EditorState =
+    | EditorLoading
+    | EditorLoaded(Editor)
 
-initial_state: State = { render_editor = true, editor = Nothing }
+initial_state: State = { editor = EditorLoading, compiler = CompilerLoading }
 
 type alias Html = Html.Html(Event)
 
-view = fn (state: State): Array(Html) -> [
-    if state.render_editor then
-        Html.div(
-            [
-                Attr.id("editor"),
-                Events.on_mount(EditorMounted),
-                Events.on_unmount(EditorUnmounted),
-            ],
-            [],
-        )
-    else
-        Html.empty,
+view = fn (_state: State): Array(Html) -> [
+    Html.div(
+        [
+            Attr.id("editor"),
+            Events.on_mount(EditorMounted),
+            Events.on_unmount(EditorUnmounted),
+        ],
+        [],
+    ),
+    Html.button([Events.on_click(FormatCode)], [Html.text("format")]),
 ]
 
 type Event =
@@ -76,42 +70,91 @@ type Event =
     | EditorMounted(Element)
     | EditorInitialized(Editor)
     | EditorUnmounted
+    | CompilerInitialized(Compiler)
+    | FormatCode
 
 type alias Next = App.Next(State, Event)
-
-code = "module Maybe exports (..)
-
-type Maybe(a) = Just(a) | Nothing
-
-"
 
 update = fn (state: State, event: Event): Next ->
     match event with
     | NoOp -> { state = state, task = Nothing }
     | EditorMounted(element) -> {
         state = state,
-        task = Just(
-            Task.from_effect(Editor.init(code, element))
-            |> Task.map_result(
-                fn (result) ->
-                    match result with
-                    | Ok(editor) -> Ok(EditorInitialized(editor))
-                    | Err(_) -> Ok(NoOp)
-                    end,
-            ),
-        ),
+        task = Just(init_editor(element)),
     }
     | EditorInitialized(editor) -> {
-        state = { state | editor = Just(editor) },
+        state = {
+            state |editor = EditorLoaded(editor)},
         task = Nothing,
     }
     | EditorUnmounted -> {
         state = state,
-        task = Maybe.map(
-            state.editor,
-            fn (editor) ->
-                Task.from_effect(Editor.destroy(editor))
-                |> Task.map_result(fn (_) -> Ok(NoOp)),
-        ),
+        task = match state.editor with
+        | EditorLoaded(editor) -> Just(unmount_editor(editor))
+        | _ -> Nothing
+        end,
     }
+    | CompilerInitialized(compiler) -> {
+        state = {
+            state |compiler = CompilerLoaded(compiler)},
+        task = Nothing,
+    }
+    | FormatCode ->
+        match state.editor with
+        | EditorLoaded(editor) ->
+            match state.compiler with
+            | CompilerLoaded(compiler) -> {
+                state = state,
+                task = Just(format_code(editor, compiler)),
+            }
+            | _ -> { state = state, task = Nothing }
+            end
+        | _ -> { state = state, task = Nothing }
+        end
     end
+
+type alias Task = Task.Task(Event, Never)
+
+init_editor = fn (element: Element): Task ->
+    Task.from_effect(Editor.init(default_code, element))
+    |> Task.map_result(
+        fn (result) ->
+            match result with
+            | Ok(editor) -> Ok(EditorInitialized(editor))
+            | Err(_) -> Ok(NoOp)
+            end,
+    )
+
+unmount_editor = fn (editor: Editor): Task ->
+    Task.from_effect(Editor.destroy(editor))
+    |> Task.map_result(fn (_) -> Ok(NoOp))
+
+init_compiler: Task =
+    Compiler.init
+    |> Task.map_result(
+        fn (result) ->
+            match result with
+            | Ok(compiler) -> Ok(CompilerInitialized(compiler))
+            | Err(_) -> Ok(NoOp)
+            end,
+    )
+
+format_code = fn (editor: Editor, compiler: Compiler): Task ->
+    Task.from_effect(Editor.get_text(editor))
+    |> Task.and_then(
+        fn (code) ->
+            match compiler.fmt(code) with
+            | Ok(formatted) -> Task.succeed(formatted)
+            | Err(_error) -> Task.succeed(code)
+            end,
+    )
+    |> Task.and_then(
+        fn (formatted) -> Task.from_effect(Editor.set_text(editor, formatted)),
+    )
+    |> Task.map_result(fn (_) -> Ok(NoOp))
+
+default_code = "module Maybe exports (..)
+
+type Maybe(a) = Just(a) | Nothing
+
+"

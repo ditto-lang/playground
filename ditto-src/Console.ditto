@@ -1,0 +1,9 @@
+-- TODO: create+use `js-console` package
+module Console exports (
+    log,
+)
+
+
+log = log_impl
+
+foreign log_impl: (String) -> Effect(Unit)

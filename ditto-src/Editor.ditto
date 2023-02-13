@@ -2,6 +2,7 @@ module Editor exports (
     Editor,
     init,
     get_text,
+    set_text,
     destroy,
 )
 
@@ -16,10 +17,14 @@ init = init_impl
 
 get_text = get_text_impl
 
+set_text = set_text_impl
+
 destroy = destroy_impl
 
 foreign init_impl: (String, Element) -> Effect(Editor)
 
 foreign get_text_impl: (Editor) -> Effect(String)
+
+foreign set_text_impl: (Editor, String) -> Effect(Unit)
 
 foreign destroy_impl: (Editor) -> Effect(Unit)
