@@ -6,7 +6,7 @@ includes = ["*.ditto"]
 [formatter.prettier]
 command = "npx"
 options = ["prettier", "--write"]
-includes = ["*.js", "*.ts", "*.json", "*.md", "*.yaml", "*.html"]
+includes = ["*.js", "*.ts", "*.json", "*.md", "*.yaml", "*.html", "*.css"]
 
 [formatter.rust]
 command = "rustfmt"

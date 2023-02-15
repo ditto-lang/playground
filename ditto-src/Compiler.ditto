@@ -1,5 +1,6 @@
 module Compiler exports (
     Compiler,
+    CompileJsOutput,
     init,
 )
 
@@ -16,15 +17,18 @@ import (std) Result (
     Result(..),
 )
 
+import Editor (
+    Change,
+)
+
 
 type alias Compiler = {
-    compile_js: (String) -> Result(
-        { js: String, warnings: Array(String) },
-        String,
-    ),
-    fmt: (String) -> Result(String, String),
+    compile_js: (String) -> Result(CompileJsOutput, String),
+    fmt: (String) -> Result(Array(Change), String),
     parse: (String) -> Result(Unit, String),
 }
+
+type alias CompileJsOutput = { js: String, warnings: Array(String) }
 
 init: Task(Compiler, Unknown) = Task.new(
     fn (result_handler: Task.Callback(Compiler, Unknown)) -> do {

@@ -5,6 +5,8 @@ import { defaultKeymap } from "@codemirror/commands";
 import { LanguageSupport, LRLanguage } from "@codemirror/language";
 import { dittoParser, dittoHighlighting } from "lezer-ditto";
 import { styleTags } from "@lezer/highlight";
+import { solarizedLight as theme } from "cm6-theme-solarized-light";
+export { solarizedLightHighlightStyle as themeHighlightStyle } from "cm6-theme-solarized-light";
 
 const dittoParserWithMetadata = dittoParser.configure({
   props: [styleTags(dittoHighlighting)],
@@ -30,7 +32,7 @@ export function init_impl(doc, parent) {
   return () => {
     const state = EditorState.create({
       doc,
-      extensions: [basicSetup, keymap.of(defaultKeymap), ditto()],
+      extensions: [basicSetup, keymap.of(defaultKeymap), theme, ditto()],
     });
     const editor = new EditorView({
       state: state,
@@ -47,6 +49,17 @@ export function init_impl(doc, parent) {
 export function get_text_impl(editor) {
   return () => {
     return editor.state.doc.toString();
+  };
+}
+
+/**
+ * @param {EditorView} editor
+ * @param {{ from: number, to: number, insert: string}[]} changes
+ * @returns {() => void}
+ */
+export function update_text_impl(editor, changes) {
+  return () => {
+    editor.dispatch({ changes });
   };
 }
 

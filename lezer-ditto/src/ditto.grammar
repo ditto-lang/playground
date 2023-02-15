@@ -3,7 +3,7 @@
 }
 
 ModuleHeader {
-  "module" ModuleName "exports" exposing
+  kw<"module"> ModuleName kw<"exports"> exposing
 }
 
 ModuleName {
@@ -416,7 +416,7 @@ kw<term> { @specialize[@name={term}]<name, term> }
     $[0-9] $[0-9_]*
   }
   ExpressionFloat {
-    $[0-9] $[0-9_]* "\\." $[0-9] $[0-9_]*
+    $[0-9] $[0-9_]* "." $[0-9] $[0-9_]*
   }
   @precedence { ExpressionFloat, ExpressionInt }
 

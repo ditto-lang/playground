@@ -43,10 +43,18 @@ pub fn compile_js(input: String) -> JsValue {
 pub fn fmt(input: String) -> JsValue {
     set_panic_hook();
     match try_fmt(&input) {
-        Ok(output) => {
-            let json = serde_json::json!({
-                "output": output,
-            });
+        Ok(edits) => {
+            let output = edits
+                .into_iter()
+                .map(|edit| {
+                    serde_json::json!({
+                        "from": edit.from,
+                        "to": edit.to,
+                        "insert": edit.text,
+                    })
+                })
+                .collect::<Vec<_>>();
+            let json = serde_json::json!({ "output": output });
             serde_wasm_bindgen::to_value(&json).unwrap()
         }
         Err(err) => {
@@ -89,7 +97,7 @@ fn try_compile_js(input: &str) -> miette::Result<(String, Warnings)> {
         .collect::<Vec<_>>();
 
     let js_config = &ditto_codegen_js::Config {
-        foreign_module_path: "nah.js".to_string(),
+        foreign_module_path: "./Main.js".to_string(),
         module_name_to_path: Box::new(move |(_package_name, _module_name)| unreachable!()),
     };
     let js = ditto_codegen_js::codegen(js_config, ast);
@@ -97,13 +105,13 @@ fn try_compile_js(input: &str) -> miette::Result<(String, Warnings)> {
     Ok((js, warnings))
 }
 
-fn try_fmt(input: &str) -> miette::Result<String> {
+fn try_fmt(input: &str) -> miette::Result<Vec<ditto_fmt::Edit>> {
     let cst = ditto_cst::Module::parse(&input)
         .map_err(|err| err.into_report(SOURCE_NAME, input.to_string()))?;
 
-    let formatted = ditto_fmt::format_module(cst);
+    let edits = ditto_fmt::format_module_edits(cst, input.as_bytes());
 
-    Ok(formatted)
+    Ok(edits)
 }
 
 fn render_diagnostic(diagnostic: &dyn miette::Diagnostic) -> String {

@@ -1,0 +1,23 @@
+module Highlight exports (
+    highlight_js,
+)
+
+import (vdom) Attributes as Attr
+import (vdom) Html
+
+
+highlight_js = fn (source: String): Array(Html.Html(event)) ->
+    highlight_js_impl(
+        source,
+        fn (classes, text) -> Html.span(
+            [Attr.classes(classes)],
+            [Html.text(text)],
+        ),
+        fn (text) -> Html.text(text),
+    )
+
+foreign highlight_js_impl: (
+    String,
+    (Array(String), String) -> a,
+    (String) -> a,
+) -> Array(a)

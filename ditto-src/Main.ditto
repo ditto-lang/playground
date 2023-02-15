@@ -4,6 +4,14 @@ module Main exports (
 
 import (js-task) Task
 
+import (js-unknown) Unknown (
+    Unknown,
+)
+
+import (std) Array
+import (std) List (
+    List(..),
+)
 import (std) Maybe (
     Maybe(..),
 )
@@ -22,69 +30,227 @@ import (vdom) Element (
 import (vdom) Events
 import (vdom) Html
 
+import Clipboard
 import Compiler (
     Compiler,
+    CompileJsOutput,
 )
 import Editor (
     Editor,
 )
+import Highlight (
+    highlight_js,
+)
 
 
-main = fn (container: Element): Effect(Unit) -> App.mount(
+main = fn (container: Element, initial_code: String): Effect(Unit) -> App.mount(
     {
         container = container,
-        init = fn () -> {state = initial_state, task = Just(init_compiler) },
+        init = fn () -> {
+            state = initial_state(initial_code),
+            task = Just(init_compiler),
+        },
         view = view,
         update = update,
     },
 )
 
-type alias State = { compiler: CompilerState, editor: EditorState }
+type alias State = {
+    code: String,
+    compiler: CompilerState,
+    editor: EditorState,
+    output: Maybe(Output),
+    shared: Bool,
+}
+
+type Output =
+    | ParseError(String)
+    | CompileError(String)
+    | Output(String, Array(String))
 
 type CompilerState =
     | CompilerLoading
     | CompilerLoaded(Compiler)
+    | CompilerInitFailed(Unknown)
+
+compiler_loading = fn (compiler_state) ->
+    match compiler_state with
+    | CompilerLoading -> true
+    | _ -> false
+    end
 
 type EditorState =
     | EditorLoading
     | EditorLoaded(Editor)
+    | EditorInitFailed(Unknown)
 
-initial_state: State = { editor = EditorLoading, compiler = CompilerLoading }
+initial_state = fn (code: String): State -> {
+    code = code,
+    editor = EditorLoading,
+    compiler = CompilerLoading,
+    output = Nothing,
+    shared = false,
+}
 
 type alias Html = Html.Html(Event)
 
-view = fn (_state: State): Array(Html) -> [
-    Html.div(
-        [
-            Attr.id("editor"),
-            Events.on_mount(EditorMounted),
-            Events.on_unmount(EditorUnmounted),
-        ],
-        [],
-    ),
-    Html.button([Events.on_click(FormatCode)], [Html.text("format")]),
-]
+view = fn (state: State): Array(Html) ->
+    match state.compiler with
+    | CompilerInitFailed(_dunno) -> [
+        Html.span(
+            [Attr.classes(["alert"])],
+            [Html.text("compiler wasm failed to load ¯\\_(ツ)_/¯")],
+        ),
+    ]
+    | _ -> [
+        Html.div(
+            [Attr.id("controls")],
+            [
+                Html.button(
+                    [
+                        Attr.id("format-button"),
+                        Attr.disabled(compiler_loading(state.compiler)),
+                        Events.on_click(FormatClicked),
+                    ],
+                    [
+                        Html.span(
+                            [Attr.classes(["material-symbols-outlined"])],
+                            [Html.text("mop")],
+                        ),
+                        Html.text("format"),
+                    ],
+                ),
+                Html.button(
+                    [
+                        Attr.id("compile-button"),
+                        Attr.disabled(compiler_loading(state.compiler)),
+                        Events.on_click(CompileClicked),
+                    ],
+                    [
+                        Html.span(
+                            [Attr.classes(["material-symbols-outlined"])],
+                            [Html.text("save")],
+                        ),
+                        Html.text("compile"),
+                    ],
+                ),
+                Html.button(
+                    [Attr.id("share-button"), Events.on_click(ShareClicked)],
+                    [
+                        Html.span(
+                            [Attr.classes(["material-symbols-outlined"])],
+                            [Html.text("share")],
+                        ),
+                        Html.text(
+                            if state.shared then
+                                "url copied to clipboard!"
+                            else
+                                "share",
+                        ),
+                    ],
+                ),
+            ],
+        ),
+        Html.div(
+            [
+                Attr.id("ditto-editor"),
+                Events.on_mount(EditorMounted),
+                Events.on_unmount(EditorUnmounted),
+            ],
+            match state.editor with
+            | EditorInitFailed(_dunno) -> [
+                Html.text("editor failed to initialize"),
+            ]
+            | _ -> []
+            end,
+        ),
+        Html.div(
+            [Attr.id("outputs")],
+            match state.output with
+            | Nothing -> []
+            | Just(ParseError(err)) -> [
+                Html.pre(
+                    [Attr.id("error-output"), Attr.classes(["pane"])],
+                    [Html.text(err)],
+                ),
+            ]
+            | Just(CompileError(err)) -> [
+                Html.pre(
+                    [Attr.id("error-output"), Attr.classes(["pane"])],
+                    [Html.text(err)],
+                ),
+            ]
+            | Just(Output(js, warnings)) ->
+                Array.map(
+                    warnings,
+                    fn (warning) -> Html.pre(
+                        [Attr.classes(["pane", "warning-output"])],
+                        [Html.text(warning)],
+                    ),
+                )
+                |> Array.push_start(
+                    Html.pre(
+                        [Attr.id("js-output"), Attr.classes(["pane"])],
+                        [Html.code([], highlight_js(js))],
+                    ),
+                )
+            end,
+        ),
+    ]
+    end
 
 type Event =
     | NoOp
+    | Batch(List(Event))
+    | UpdateCode(String)
     | EditorMounted(Element)
-    | EditorInitialized(Editor)
+    | EditorInit(Editor)
+    | EditorInitError(Unknown)
     | EditorUnmounted
-    | CompilerInitialized(Compiler)
-    | FormatCode
+    | CompilerInit(Compiler)
+    | CompilerInitError(Unknown)
+    | FormatClicked
+    | FormattedCode
+    | FormatError(String)
+    | CompileClicked
+    | CompiledJs(CompileJsOutput)
+    | CompileJsError(String)
+    | ShareClicked
+    | UrlCopiedToClipboard
+    | ResetShared
 
 type alias Next = App.Next(State, Event)
 
 update = fn (state: State, event: Event): Next ->
     match event with
     | NoOp -> { state = state, task = Nothing }
+    | ShareClicked -> { state = state, task = Just(copy_url_to_clipboard) }
+    | UrlCopiedToClipboard -> {
+        state = { state | shared = true },
+        task = Just(
+            Task.sleep(Task.Seconds(1))
+            |> Task.map(fn (_) -> ResetShared),
+        ),
+    }
+    | ResetShared -> { state = { state | shared = false }, task = Nothing }
+    | UpdateCode(code) -> {
+        state = { state | code = code },
+        task = Just(save_code_query(code)),
+    }
     | EditorMounted(element) -> {
         state = state,
-        task = Just(init_editor(element)),
+        task = Just(init_editor(element, state.code)),
     }
-    | EditorInitialized(editor) -> {
+    | EditorInit(editor) -> {
+        state = { state | editor = EditorLoaded(editor) },
+        -- try and trigger a compilation of whatever is in the editor
+        task = Just(Task.succeed(CompileClicked)),
+    }
+    | EditorInitError(error) -> {
         state = {
-            state |editor = EditorLoaded(editor)},
+            state |
+                editor = EditorInitFailed(error),
+        },
         task = Nothing,
     }
     | EditorUnmounted -> {
@@ -94,12 +260,12 @@ update = fn (state: State, event: Event): Next ->
         | _ -> Nothing
         end,
     }
-    | CompilerInitialized(compiler) -> {
-        state = {
-            state |compiler = CompilerLoaded(compiler)},
-        task = Nothing,
+    | CompilerInit(compiler) -> {
+        state = { state | compiler = CompilerLoaded(compiler) },
+        -- try and trigger a compilation of whatever is in the editor
+        task = Just(Task.succeed(CompileClicked)),
     }
-    | FormatCode ->
+    | FormatClicked ->
         match state.editor with
         | EditorLoaded(editor) ->
             match state.compiler with
@@ -111,17 +277,96 @@ update = fn (state: State, event: Event): Next ->
             end
         | _ -> { state = state, task = Nothing }
         end
+    | FormattedCode -> {
+        state = {
+            state |
+                output = match state.output with
+                | Just(ParseError(_)) -> Nothing
+                | _ -> state.output
+                end,
+        },
+        task = Nothing,
+    }
+    | FormatError(error) -> {
+        state = {
+            state |
+                output = Just(ParseError(error)),
+        },
+        task = Nothing,
+    }
+    | CompilerInitError(error) -> {
+        state = {
+            state |
+                compiler = CompilerInitFailed(error),
+        },
+        task = Nothing,
+    }
+    | CompileClicked ->
+        match state.editor with
+        | EditorLoaded(editor) ->
+            match state.compiler with
+            | CompilerLoaded(compiler) -> {
+                state = state,
+                task = Just(compile_code(editor, compiler)),
+            }
+            | _ -> { state = state, task = Nothing }
+            end
+        | _ -> { state = state, task = Nothing }
+        end
+    | CompiledJs(compiled) -> {
+        state = {
+            state |
+                output = Just(Output(compiled.js, compiled.warnings)),
+        },
+        task = Nothing,
+    }
+    | CompileJsError(error) -> {
+        state = {
+            state |
+                output = Just(CompileError(error)),
+        },
+        task = Nothing,
+    }
+    | Batch(Nil) -> { state = state, task = Nothing }
+    | Batch(Cons(e, rest)) ->
+        let
+            head = update(state, e)
+
+            tail = update(head.state, Batch(rest))
+        in
+        {
+            state = tail.state,
+            task = match head.task with
+            | Nothing -> tail.task
+            | Just(head_task) ->
+                head_task
+                |> Task.and_then(
+                    fn (head_event) ->
+                        match tail.task with
+                        | Nothing -> Task.succeed(head_event)
+                        | Just(tail_task) ->
+                            tail_task
+                            |> Task.map(
+                                fn (tail_event) -> Batch(
+                                    Cons(head_event, Cons(tail_event, Nil)),
+                                ),
+                            )
+                        end,
+                )
+                |> Just
+            end,
+        }
     end
 
 type alias Task = Task.Task(Event, Never)
 
-init_editor = fn (element: Element): Task ->
-    Task.from_effect(Editor.init(default_code, element))
+init_editor = fn (element: Element, code: String): Task ->
+    Task.from_effect(Editor.init(code, element))
     |> Task.map_result(
         fn (result) ->
             match result with
-            | Ok(editor) -> Ok(EditorInitialized(editor))
-            | Err(_) -> Ok(NoOp)
+            | Ok(editor) -> Ok(EditorInit(editor))
+            | Err(error) -> Ok(EditorInitError(error))
             end,
     )
 
@@ -134,27 +379,75 @@ init_compiler: Task =
     |> Task.map_result(
         fn (result) ->
             match result with
-            | Ok(compiler) -> Ok(CompilerInitialized(compiler))
-            | Err(_) -> Ok(NoOp)
+            | Ok(compiler) -> Ok(CompilerInit(compiler))
+            | Err(error) -> Ok(CompilerInitError(error))
             end,
     )
 
 format_code = fn (editor: Editor, compiler: Compiler): Task ->
     Task.from_effect(Editor.get_text(editor))
+    |> Task.map_err(fn (_) -> NoOp)  -- wut?
     |> Task.and_then(
         fn (code) ->
             match compiler.fmt(code) with
-            | Ok(formatted) -> Task.succeed(formatted)
-            | Err(_error) -> Task.succeed(code)
+            | Ok(changes) -> Task.succeed(changes)
+            | Err(error) -> Task.fail(FormatError(error))
             end,
     )
     |> Task.and_then(
-        fn (formatted) -> Task.from_effect(Editor.set_text(editor, formatted)),
+        fn (changes) ->
+            Task.from_effect(Editor.update_text(editor, changes))
+            |> Task.map_err(fn (_) -> NoOp),
     )
+    |> Task.map_result(
+        fn (result) ->
+            match result with
+            | Ok(_) -> Ok(FormattedCode)
+            | Err(event) -> Ok(event)
+            end,
+    )
+
+compile_code = fn (editor: Editor, compiler: Compiler): Task ->
+    Task.from_effect(Editor.get_text(editor))
+    |> Task.map_result(
+        fn (result) ->
+            match result with
+            | Ok(code) ->
+                match compiler.compile_js(code) with
+                | Ok(output) -> Ok(
+                    Batch(
+                        Cons(
+                            --
+                            CompiledJs(output),
+                            Cons(UpdateCode(code), Nil),
+                        ),
+                    ),
+                )
+                | Err(error) -> Ok(
+                    Batch(
+                        Cons(
+                            CompileJsError(error),
+                            Cons(UpdateCode(code), Nil),
+                        ),
+                    ),
+                )
+                end
+            | Err(_) -> Ok(NoOp)
+            end,
+    )
+
+copy_url_to_clipboard: Task =
+    Clipboard.copy_url
+    |> Task.map_result(
+        fn (result) ->
+            match result with
+            | Ok(_) -> Ok(UrlCopiedToClipboard)
+            | Err(_) -> Ok(NoOp)
+            end,
+    )
+
+save_code_query = fn (code: String): Task ->
+    Task.from_effect(save_code_query_impl(code))
     |> Task.map_result(fn (_) -> Ok(NoOp))
 
-default_code = "module Maybe exports (..)
-
-type Maybe(a) = Just(a) | Nothing
-
-"
+foreign save_code_query_impl: (String) -> Effect(Unit)

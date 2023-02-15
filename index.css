@@ -1,0 +1,196 @@
+/* https://github.com/elad2412/the-new-css-reset */
+/* https://www.joshwcomeau.com/css/custom-css-reset/ */
+
+/* Remove all the styles of the "User-Agent-Stylesheet", except for the 'display' property
+  (The "symbol *" part is to solve Firefox SVG sprite bug) */
+
+*:where(
+    :not(html, iframe, canvas, img, svg, video, audio):not(svg *, symbol *)
+  ) {
+  all: unset;
+  display: revert;
+}
+
+/* border-box ftw */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* preformatted text - use only for this feature */
+:where(pre) {
+  all: revert;
+  margin: unset;
+}
+
+:root {
+  --ditto-white: #fff;
+  --ditto-black: #000;
+  --ditto-mint: #beeedc;
+  --ditto-pink: #ef87be;
+  --ditto-blue: #5e7fe1;
+  --ditto-yellow: #f7cf46;
+}
+
+@define-mixin bordered {
+  border-width: 3px;
+  border-style: solid;
+  border-color: var(--ditto-black);
+  border-radius: 5px;
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-family: "Fira Code", monospace;
+  /* disable ligatures as we don't want to obscure the actual syntax */
+  font-variant-ligatures: none;
+
+  background-image: radial-gradient(var(--ditto-black) 20%, transparent 20%);
+  background-size: 5px 5px;
+}
+
+/* selecting this div is a bit of a hack, 
+   it's the top level ditto element until there is proper fragment support */
+body > div {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem;
+  grid-template-areas:
+    "controls"
+    "editor"
+    "outputs";
+}
+
+@media screen and (min-width: 80ch) {
+  body > div {
+    grid-template-areas:
+      "controls controls"
+      "editor   outputs";
+  }
+}
+
+code,
+.cm-content {
+  font-family: "Fira Code", monospace;
+}
+
+.cm-editor {
+  @mixin bordered;
+}
+
+.pane {
+  @mixin bordered;
+}
+
+a {
+  cursor: pointer;
+}
+
+button {
+  @mixin bordered;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+}
+
+/* little wink when you hover ;) */
+button:hover {
+  transform: translateY(-2px);
+}
+
+#controls {
+  grid-area: controls;
+  display: flex;
+  gap: 1rem;
+}
+
+#format-button {
+  background-color: var(--ditto-mint);
+}
+
+#compile-button {
+  background-color: var(--ditto-blue);
+  color: var(--ditto-white);
+}
+
+#share-button {
+  background-color: var(--ditto-white);
+}
+
+#ditto-editor {
+  grid-area: editor;
+}
+
+#outputs {
+  grid-area: outputs;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#js-output {
+  grid-area: primary-output;
+  padding: 0.75rem 1rem;
+}
+
+.warning-output {
+  grid-area: other-outputs;
+  background-color: var(--ditto-yellow);
+}
+
+#error-output {
+  grid-area: primary-output;
+  background-color: var(--ditto-pink);
+}
+
+.warning-output,
+#error-output {
+  overflow-x: auto;
+  padding-bottom: 1.5rem;
+}
+
+.alert {
+  @mixin bordered;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem;
+  background-color: red;
+  color: white;
+}
+
+/* https://tholman.com/github-corners/ */
+.github-corner:hover .octo-arm {
+  animation: octocat-wave 560ms ease-in-out;
+}
+
+@keyframes octocat-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  20%,
+  60% {
+    transform: rotate(-25deg);
+  }
+
+  40%,
+  80% {
+    transform: rotate(10deg);
+  }
+}
+
+@media (max-width: 500px) {
+  .github-corner:hover .octo-arm {
+    animation: none;
+  }
+
+  .github-corner .octo-arm {
+    animation: octocat-wave 560ms ease-in-out;
+  }
+}

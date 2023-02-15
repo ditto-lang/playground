@@ -1,7 +1,26 @@
-# Minimal Module
+# Kitchen sink
 
 module Some.Module exports (..)
 
+import Foo
+
+-- the number five
+five = 5
+
+five_string = "5"
+
+floaty_five = 5.0
+
+
 ==>
 
-SourceFile(ModuleHeader(ModuleName, ExposingEverything))
+SourceFile(
+	ModuleHeader(module, ModuleName, exports, ExposingEverything),
+
+	ModuleImport(import, ModuleName),
+
+	Comment,
+	ValueDeclaration(ValueDeclarationName, ExpressionInt)
+	ValueDeclaration(ValueDeclarationName, ExpressionString)
+	ValueDeclaration(ValueDeclarationName, ExpressionFloat)
+)

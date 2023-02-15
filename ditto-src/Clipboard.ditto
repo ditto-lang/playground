@@ -1,0 +1,29 @@
+module Clipboard exports (
+    copy_url,
+)
+
+import (js-task) Task (
+    Task,
+)
+
+import (js-unknown) Unknown (
+    Unknown,
+)
+
+import (std) Effect
+import (std) Result (
+    Result(..),
+)
+
+
+copy_url: Task(Unit, Unknown) = Task.new(
+    fn (result_handler) -> do {
+        copy_url_impl(
+            result_handler(Ok(unit)),
+            fn (dunno) -> result_handler(Err(dunno)),
+        );
+        return Effect.noop
+    },
+)
+
+foreign copy_url_impl: (Effect(Unit), (Unknown) -> Effect(Unit)) -> Effect(Unit)

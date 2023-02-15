@@ -1,7 +1,9 @@
 module Editor exports (
     Editor,
+    Change,
     init,
     get_text,
+    update_text,
     set_text,
     destroy,
 )
@@ -13,9 +15,13 @@ import (vdom) Element (
 
 type Editor
 
+type alias Change = { from: Int, to: Int, insert: String }
+
 init = init_impl
 
 get_text = get_text_impl
+
+update_text = update_text_impl
 
 set_text = set_text_impl
 
@@ -24,6 +30,8 @@ destroy = destroy_impl
 foreign init_impl: (String, Element) -> Effect(Editor)
 
 foreign get_text_impl: (Editor) -> Effect(String)
+
+foreign update_text_impl: (Editor, Array(Change)) -> Effect(Unit)
 
 foreign set_text_impl: (Editor, String) -> Effect(Unit)
 

@@ -1,4 +1,6 @@
 import init, * as wasm from "ditto-web";
+import prettier from "prettier/standalone";
+import prettierParserBabel from "prettier/parser-babel";
 
 /**
  * @param {(compiler: any) => () => void} handle_success
@@ -18,7 +20,12 @@ export function init_impl(handle_success, handle_error, Ok, Err, unit) {
             return Err(result.get("error"));
           }
           return Ok({
-            js: result.get("output"),
+            js: format_js(
+              result
+                .get("output")
+                // add some empty lines
+                .replace(/(\n)/g, "$1$1")
+            ),
             warnings: result.get("warnings"),
           });
         };
@@ -28,7 +35,12 @@ export function init_impl(handle_success, handle_error, Ok, Err, unit) {
           if (result.has("error")) {
             return Err(result.get("error"));
           }
-          return Ok(result.get("output"));
+          const edits = result.get("output").map((edit) => ({
+            from: edit.get("from"),
+            to: edit.get("to"),
+            insert: edit.get("insert"),
+          }));
+          return Ok(edits);
         };
 
         const parse = (/** @type {string} */ input) => {
@@ -45,4 +57,11 @@ export function init_impl(handle_success, handle_error, Ok, Err, unit) {
         handle_error(err)();
       });
   };
+}
+
+function format_js(code) {
+  return prettier.format(code, {
+    filepath: "output.js",
+    plugins: [prettierParserBabel],
+  });
 }

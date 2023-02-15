@@ -1,19 +1,23 @@
 import { tags as t } from "@lezer/highlight";
 
+// wip
 export const dittoHighlighting = {
-  "module exports type": t.keyword,
   Comment: t.lineComment,
-  TypeDeclarationName: t.typeName,
-  TypeConstructorProperName: t.typeName,
   ValueDeclarationName: t.name,
-  ExpressionVariableName: t.variableName,
-  PatternVariable: t.variableName,
-  ExpressionRecordFieldLabel: t.labelName,
-  Qualifier: t.namespace,
+  "ExpressionVariableName PatternVariable": t.variableName,
+  "TypeDeclarationName TypeConstructorProperName": t.typeName,
+  ExpressionRecordFieldLabel: t.propertyName,
+  "ModuleName ModuleImportAlias Qualifier": t.namespace,
+  "TypeDeclarationConstructorName PatternConstructorProperName ExpressionConstructorProperName":
+    t.className,
   ExpressionString: t.string,
   ExpressionInt: t.number,
   ExpressionFloat: t.number,
-  ExpressionTrue: t.bool,
-  ExpressionFalse: t.bool,
+  true: t.bool,
+  false: t.bool,
   unit: t.null,
+  "module exports import as type alias": t.moduleKeyword,
+  "if then else match with end": t.controlKeyword,
+  "let in do fn": t.keyword,
+  "|>": t.operator,
 };
