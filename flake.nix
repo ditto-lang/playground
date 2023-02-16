@@ -20,6 +20,7 @@
         {
           devShells.default = pkgs.mkShell {
             buildInputs = [
+              pkgs.nodejs
               pkgs.wasm-pack
               pkgs.wasm-bindgen-cli
               pkgs.binaryen

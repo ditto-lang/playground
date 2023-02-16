@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and deploy application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Rust 🦀
+        uses: actions-rs/toolchain@v1
+        with:
+          # Keep this in sync with rust-toolchain.toml!
+          # At least until toml toolchains are supported:
+          # https://github.com/actions-rs/toolchain/issues/126
+          # https://github.com/actions-rs/toolchain/pull/166
+          toolchain: nightly-2023-02-13
+          profile: minimal
+          override: true
+
+      - name: Setup wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          # Matches the version we get from the Nix shell
+          version: v0.10.3
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+
+      - name: Setup ditto
+        id: setup-ditto
+        uses: ditto-lang/actions/setup-ditto@main
+        with:
+          release-version: 0.0.4
+
+      - name: Cache ditto stuff
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.setup-ditto.outputs.cache-dir }}
+          key: ${{ runner.os }}-${{ hashFiles('ditto.toml') }}
+
+      - run: npm run wasm-pack
+
+      - run: ditto make
+
+      - run: npm install
+
+      - run: npm run build
+
+      - if: ${{ github.event_name == 'push' }}
+        name: Deploy
+        # Maybe we should be using https://github.com/actions/deploy-pages ?
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          force_orphan: true
