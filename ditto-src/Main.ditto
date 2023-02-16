@@ -60,7 +60,9 @@ type alias State = {
     compiler: CompilerState,
     editor: EditorState,
     output: Maybe(Output),
-    shared: Bool,
+    format_button_text: String,
+    compile_button_text: String,
+    share_button_text: String,
 }
 
 type Output =
@@ -89,8 +91,16 @@ initial_state = fn (code: String): State -> {
     editor = EditorLoading,
     compiler = CompilerLoading,
     output = Nothing,
-    shared = false,
+    format_button_text = initial_format_button_text,
+    compile_button_text = initial_compile_button_text,
+    share_button_text = initial_share_button_text,
 }
+
+initial_format_button_text = "format"
+
+initial_compile_button_text = "compile"
+
+initial_share_button_text = "share"
 
 type alias Html = Html.Html(Event)
 
@@ -117,7 +127,7 @@ view = fn (state: State): Array(Html) ->
                             [Attr.classes(["material-symbols-outlined"])],
                             [Html.text("mop")],
                         ),
-                        Html.text("format"),
+                        Html.text(state.format_button_text),
                     ],
                 ),
                 Html.button(
@@ -131,7 +141,7 @@ view = fn (state: State): Array(Html) ->
                             [Attr.classes(["material-symbols-outlined"])],
                             [Html.text("save")],
                         ),
-                        Html.text("compile"),
+                        Html.text(state.compile_button_text),
                     ],
                 ),
                 Html.button(
@@ -141,7 +151,7 @@ view = fn (state: State): Array(Html) ->
                             [Attr.classes(["material-symbols-outlined"])],
                             [Html.text("share")],
                         ),
-                        Html.text(if state.shared then "copied!" else "share"),
+                        Html.text(state.share_button_text),
                     ],
                 ),
             ],
@@ -212,7 +222,9 @@ type Event =
     | CompileJsError(String)
     | ShareClicked
     | UrlCopiedToClipboard
-    | ResetShared
+    | ResetFormatButtonText
+    | ResetCompileButtonText
+    | ResetShareButtonText
 
 type alias Next = App.Next(State, Event)
 
@@ -221,13 +233,22 @@ update = fn (state: State, event: Event): Next ->
     | NoOp -> { state = state, task = Nothing }
     | ShareClicked -> { state = state, task = Just(copy_url_to_clipboard) }
     | UrlCopiedToClipboard -> {
-        state = { state | shared = true },
+        state = {
+            state |
+                share_button_text = "copied!",
+        },
         task = Just(
             Task.sleep(Task.Seconds(1))
-            |> Task.map(fn (_) -> ResetShared),
+            |> Task.map(fn (_) -> ResetShareButtonText),
         ),
     }
-    | ResetShared -> { state = { state | shared = false }, task = Nothing }
+    | ResetShareButtonText -> {
+        state = {
+            state |
+                share_button_text = initial_share_button_text,
+        },
+        task = Nothing,
+    }
     | UpdateCode(code) -> {
         state = { state | code = code },
         task = Just(save_code_query(code)),
@@ -265,7 +286,10 @@ update = fn (state: State, event: Event): Next ->
         | EditorLoaded(editor) ->
             match state.compiler with
             | CompilerLoaded(compiler) -> {
-                state = state,
+                state = {
+                    state |
+                        format_button_text = "formatting...",
+                },
                 task = Just(format_code(editor, compiler)),
             }
             | _ -> { state = state, task = Nothing }
@@ -275,17 +299,29 @@ update = fn (state: State, event: Event): Next ->
     | FormattedCode -> {
         state = {
             state |
+                format_button_text = "formatted!",
                 output = match state.output with
                 | Just(ParseError(_)) -> Nothing
                 | _ -> state.output
                 end,
         },
-        task = Nothing,
+        task = Just(
+            Task.sleep(Task.Milliseconds(500))
+            |> Task.map(fn (_) -> ResetFormatButtonText),
+        ),
     }
     | FormatError(error) -> {
         state = {
             state |
+                format_button_text = initial_format_button_text,
                 output = Just(ParseError(error)),
+        },
+        task = Nothing,
+    }
+    | ResetFormatButtonText -> {
+        state = {
+            state |
+                format_button_text = initial_format_button_text,
         },
         task = Nothing,
     }
@@ -301,7 +337,10 @@ update = fn (state: State, event: Event): Next ->
         | EditorLoaded(editor) ->
             match state.compiler with
             | CompilerLoaded(compiler) -> {
-                state = state,
+                state = {
+                    state |
+                        compile_button_text = "compiling...",
+                },
                 task = Just(compile_code(editor, compiler)),
             }
             | _ -> { state = state, task = Nothing }
@@ -311,14 +350,26 @@ update = fn (state: State, event: Event): Next ->
     | CompiledJs(compiled) -> {
         state = {
             state |
+                compile_button_text = "compiled!",
                 output = Just(Output(compiled.js, compiled.warnings)),
         },
-        task = Nothing,
+        task = Just(
+            Task.sleep(Task.Milliseconds(600))
+            |> Task.map(fn (_) -> ResetCompileButtonText),
+        ),
     }
     | CompileJsError(error) -> {
         state = {
             state |
+                compile_button_text = initial_compile_button_text,
                 output = Just(CompileError(error)),
+        },
+        task = Nothing,
+    }
+    | ResetCompileButtonText -> {
+        state = {
+            state |
+                compile_button_text = initial_compile_button_text,
         },
         task = Nothing,
     }
