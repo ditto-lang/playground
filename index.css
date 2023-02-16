@@ -52,9 +52,7 @@ body {
   background-size: 5px 5px;
 }
 
-/* selecting this div is a bit of a hack, 
-   it's the top level ditto element until there is proper fragment support */
-body > div {
+#app {
   display: grid;
   gap: 1rem;
   margin: 1rem;
@@ -65,7 +63,7 @@ body > div {
 }
 
 @media screen and (min-width: 80ch) {
-  body > div {
+  #app {
     grid-template-areas:
       "controls controls"
       "editor   outputs";
@@ -105,7 +103,17 @@ button:hover {
 #controls {
   grid-area: controls;
   display: flex;
+  flex-direction: column;
   gap: 1rem;
+}
+
+#controls .material-symbols-outlined {
+  margin-right: 0.5rem;
+}
+@media screen and (min-width: 80ch) {
+  #controls {
+    flex-direction: row;
+  }
 }
 
 #format-button {
@@ -123,10 +131,13 @@ button:hover {
 
 #ditto-editor {
   grid-area: editor;
+  min-width: 0;
 }
 
 #outputs {
   grid-area: outputs;
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -135,6 +146,8 @@ button:hover {
 #js-output {
   grid-area: primary-output;
   padding: 0.75rem 1rem;
+  /* imitate the editor theme */
+  background-color: #fdf6e3;
 }
 
 .warning-output {
@@ -147,6 +160,7 @@ button:hover {
   background-color: var(--ditto-pink);
 }
 
+#js-output,
 .warning-output,
 #error-output {
   overflow-x: auto;
@@ -161,6 +175,11 @@ button:hover {
   padding: 1rem;
   background-color: red;
   color: white;
+}
+
+/* don't use transparency for the editor gutter, because it's scrollable */
+.cm-gutters {
+  background-color: #eee7d5 !important;
 }
 
 /* https://tholman.com/github-corners/ */

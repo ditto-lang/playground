@@ -22,13 +22,8 @@ map = fn (mb, f) ->
 function kebab(str) {
   return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
 }
-
-function main() {
+function addThemeTokenStyles() {
   const style = document.createElement("style");
-
-  // HACK: imitate the codemirror editor
-  style.innerText = `#js-output { background-color: #fdf6e3 }`;
-
   for (const { tag, class: _, ...styles } of themeHighlightStyle.specs) {
     const className = Array.isArray(tag)
       ? classHighlighter.style(tag)
@@ -41,6 +36,10 @@ function main() {
     }
   }
   document.head.appendChild(style);
+}
+
+function main() {
+  addThemeTokenStyles();
 
   let code = DEFAULT_CODE;
 
