@@ -24,10 +24,10 @@ function kebab(str) {
 }
 
 function main() {
-  const sheet = new CSSStyleSheet();
+  const style = document.createElement("style");
 
   // HACK: imitate the codemirror editor
-  sheet.insertRule(`#js-output { background-color: #fdf6e3 }`);
+  style.innerText = `#js-output { background-color: #fdf6e3 }`;
 
   for (const { tag, class: _, ...styles } of themeHighlightStyle.specs) {
     const className = Array.isArray(tag)
@@ -37,10 +37,10 @@ function main() {
       const rules = Object.entries(styles)
         .map(([key, value]) => `${kebab(key)}: ${value}`)
         .join(";");
-      sheet.insertRule(`.${className} { ${rules} }`);
+      style.innerText += `.${className} { ${rules} }`;
     }
   }
-  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  document.head.appendChild(style);
 
   let code = DEFAULT_CODE;
 
