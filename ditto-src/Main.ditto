@@ -141,12 +141,7 @@ view = fn (state: State): Array(Html) ->
                             [Attr.classes(["material-symbols-outlined"])],
                             [Html.text("share")],
                         ),
-                        Html.text(
-                            if state.shared then
-                                "url copied to clipboard!"
-                            else
-                                "share",
-                        ),
+                        Html.text(if state.shared then "copied!" else "share"),
                     ],
                 ),
             ],
