@@ -166,13 +166,13 @@ view = fn (state: State): Array(Html) ->
             | Just(ParseError(err)) -> [
                 Html.pre(
                     [Attr.id("error-output"), Attr.classes(["pane"])],
-                    [Html.text(err)],
+                    [Html.code([], [Html.text(err)])],
                 ),
             ]
             | Just(CompileError(err)) -> [
                 Html.pre(
                     [Attr.id("error-output"), Attr.classes(["pane"])],
-                    [Html.text(err)],
+                    [Html.code([], [Html.text(err)])],
                 ),
             ]
             | Just(Output(js, warnings)) ->
@@ -180,7 +180,7 @@ view = fn (state: State): Array(Html) ->
                     warnings,
                     fn (warning) -> Html.pre(
                         [Attr.classes(["pane", "warning-output"])],
-                        [Html.text(warning)],
+                        [Html.code([], [Html.text(warning)])],
                     ),
                 )
                 |> Array.push_start(
