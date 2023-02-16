@@ -179,6 +179,7 @@ button:hover {
 
 /* don't use transparency for the editor gutter, because it's scrollable */
 .cm-gutters {
+  /* thanks https://borderleft.com/toolbox/rgba/ */
   background-color: #eee7d5 !important;
 }
 
