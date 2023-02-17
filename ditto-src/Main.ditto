@@ -75,7 +75,7 @@ type CompilerState =
     | CompilerLoaded(Compiler)
     | CompilerInitFailed(Unknown)
 
-compiler_loading = fn (compiler_state) ->
+compiler_is_loading = fn (compiler_state) ->
     match compiler_state with
     | CompilerLoading -> true
     | _ -> false
@@ -119,7 +119,7 @@ view = fn (state: State): Array(Html) ->
                 Html.button(
                     [
                         Attr.id("format-button"),
-                        Attr.disabled(compiler_loading(state.compiler)),
+                        Attr.disabled(compiler_is_loading(state.compiler)),
                         Events.on_click(FormatClicked),
                     ],
                     [
@@ -133,7 +133,7 @@ view = fn (state: State): Array(Html) ->
                 Html.button(
                     [
                         Attr.id("compile-button"),
-                        Attr.disabled(compiler_loading(state.compiler)),
+                        Attr.disabled(compiler_is_loading(state.compiler)),
                         Events.on_click(CompileClicked),
                     ],
                     [

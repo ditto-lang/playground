@@ -96,7 +96,7 @@ button {
 }
 
 /* little wink when you hover ;) */
-button:hover {
+button:enabled:hover {
   transform: translateY(-2px);
 }
 
