@@ -118,9 +118,7 @@ fn render_diagnostic(diagnostic: &dyn miette::Diagnostic) -> String {
     let mut rendered = String::new();
     miette::GraphicalReportHandler::new()
         .with_theme(miette::GraphicalTheme {
-            // Need to be explicit about this, because the `Default::default()`
-            // is impure and can vary between environments, which is no good for testing
-            characters: miette::ThemeCharacters::unicode(),
+            characters: miette::ThemeCharacters::ascii(),
             styles: miette::ThemeStyles::none(),
         })
         .with_context_lines(3)
